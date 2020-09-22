@@ -8,8 +8,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.NonNullList;
 
-import static mod.noriokun4649.shulkerboxmultiopentool.ShulkerBoxMultiOpenToolMod.LOGGER;
-
 import java.util.List;
 
 public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
@@ -38,15 +36,17 @@ public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
     }
 
     @Override
-    public void removeShulkerBoxOnSlot(final IInventory iInventory, final int slotNum, final ItemStack itemStack) {
+    public void removeShulkerBoxOnSlot(final IInventory iInventory, final int slotNum) {
         int slotSize = 27;
         int endSize = slotSize * slotNum;
-        NonNullList<ItemStack> list = NonNullList.withSize(27, ItemStack.EMPTY);
         for (int i = endSize - slotSize; i < endSize; i++) {
-            list.set(i,iInventory.getStackInSlot(i));
             iInventory.removeStackFromSlot(i);
         }
-        saveCompoundNBT(itemStack, list);
+    }
+
+    @Override
+    public void changeAllSlot(IInventory iInventory) {
+        
     }
 
     private void setInventoryItemsStacks(final int offset, final NonNullList<ItemStack> inventoryItemsStacks) {

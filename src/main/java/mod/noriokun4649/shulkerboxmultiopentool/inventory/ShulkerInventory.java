@@ -41,7 +41,6 @@ public class ShulkerInventory extends Inventory {
     public void markDirty() {
         super.markDirty();
 
-
         ItemStack[] nowItemStacks = {getStackInSlot(81), getStackInSlot(82), getStackInSlot(83)};
 
         boolean isRemovedOnSlot1 = nowItemStacks[0].getItem() == Items.AIR && Block.getBlockFromItem(itemStack1.getItem()) instanceof ShulkerBoxBlock;
@@ -67,8 +66,12 @@ public class ShulkerInventory extends Inventory {
                 itemStack3 = nowItemStacks[2].copy();
                 while (var1.hasNext()) {
                     IShulkerSlotChangeListener changeListener = (IShulkerSlotChangeListener) var1.next();
-                    changeListener.removeShulkerBoxOnSlot(this, slotNum, nowItemStacks[slotNum - 1]);
+                    changeListener.removeShulkerBoxOnSlot(this, slotNum);
                 }
+            }
+            while (var1.hasNext()) {
+                IShulkerSlotChangeListener changeListener = (IShulkerSlotChangeListener) var1.next();
+                changeListener.changeAllSlot(this);
             }
         }
     }
