@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[31,)"
+license="MIT License"
+
+[[mods]]
+modId="shulkerboxmultiopentool"
+version="1.0-beta"
+displayName="ShulkerBoxMultiOpenToolMod"
+updateJSONURL="https://raw.githubusercontent.com/noriokun4649/ShulkerBoxMultiOpenToolMod/master/update.json"
+credits="noriokun4649"
+authors="noriokun4649"
+description="Adds a ShulkerBoxMultiOpenTool."
+
+[[dependencies.torchbowmod]]
+    modId="forge"
+    mandatory=true
+    versionRange="[31,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.torchbowmod]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.16.1,1.16.2]"
+    ordering="NONE"
+    side="BOTH"
