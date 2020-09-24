@@ -2,13 +2,18 @@ package mod.noriokun4649.shulkerboxmultiopentool.container;
 
 import mod.noriokun4649.shulkerboxmultiopentool.inventory.IShulkerSlotChangeListener;
 import mod.noriokun4649.shulkerboxmultiopentool.inventory.ShulkerInventory;
+import net.minecraft.block.Block;
+import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.NonNullList;
 
 import java.util.List;
+
+import static mod.noriokun4649.shulkerboxmultiopentool.ShulkerBoxMultiOpenToolMod.LOGGER;
 
 public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
     ShulkerInventory iInventory;
@@ -46,7 +51,21 @@ public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
 
     @Override
     public void changeAllSlot(IInventory iInventory) {
-        
+        ItemStack slot1 = iInventory.getStackInSlot(82);
+        ItemStack slot2 = iInventory.getStackInSlot(83);
+        ItemStack slot3 = iInventory.getStackInSlot(84);
+        if (Block.getBlockFromItem(slot1.getItem()) instanceof ShulkerBoxBlock) saveCompoundNBT(slot1, getAllItemStack(0));
+        if (Block.getBlockFromItem(slot2.getItem()) instanceof ShulkerBoxBlock) saveCompoundNBT(slot2, getAllItemStack(1));
+        if (Block.getBlockFromItem(slot3.getItem()) instanceof ShulkerBoxBlock) saveCompoundNBT(slot3, getAllItemStack(2));
+    }
+
+    private NonNullList<ItemStack> getAllItemStack(final int startSlot) {
+        int maxSize = 27;
+        NonNullList<ItemStack> itemStacks = NonNullList.withSize(maxSize, ItemStack.EMPTY);
+        for (int i = 0; i < maxSize; i++) {
+            itemStacks.set(i, iInventory.getStackInSlot(i + (maxSize * startSlot)));
+        }
+        return itemStacks;
     }
 
     private void setInventoryItemsStacks(final int offset, final NonNullList<ItemStack> inventoryItemsStacks) {
@@ -66,8 +85,11 @@ public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
     }
 
     private void saveCompoundNBT(final ItemStack itemStack, final NonNullList<ItemStack> itemStacks) {
-        CompoundNBT compoundNBT = itemStack.getTag().getCompound("BlockEntityTag");
-        ItemStackHelper.saveAllItems(compoundNBT, itemStacks);
+        CompoundNBT compoundNBT = itemStack.getTag();
+        if (compoundNBT != null){
+            compoundNBT = compoundNBT.getCompound("BlockEntityTag");
+            ItemStackHelper.saveAllItems(compoundNBT, itemStacks);
+        }
     }
 
     private void loadCompoundNBTs(final List<ItemStack> itemStackList, final List<NonNullList<ItemStack>> nonNullLists) {
