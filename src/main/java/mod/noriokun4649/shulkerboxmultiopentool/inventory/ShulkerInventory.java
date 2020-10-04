@@ -3,10 +3,11 @@ package mod.noriokun4649.shulkerboxmultiopentool.inventory;
 import com.google.common.collect.Lists;
 import net.minecraft.block.Block;
 import net.minecraft.block.ShulkerBoxBlock;
+import net.minecraft.client.Minecraft;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.container.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
 
 import java.util.Iterator;
 import java.util.List;
@@ -17,9 +18,9 @@ public class ShulkerInventory extends Inventory {
 
     private List<IShulkerSlotChangeListener> listeners;
 
-    private ItemStack itemStack1 = ItemStack.EMPTY;
-    private ItemStack itemStack2 = ItemStack.EMPTY;
-    private ItemStack itemStack3 = ItemStack.EMPTY;
+    private ItemStack[] nowItemStacksCopy = {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY};
+
+    private boolean isBeforeCahge = false;
 
     public ShulkerInventory(final int size, final int pattern, final int addslot) {
         super((size * pattern) + addslot);
@@ -40,57 +41,45 @@ public class ShulkerInventory extends Inventory {
     @Override
     public void markDirty() {
         super.markDirty();
+        if (Minecraft.getInstance().world.isRemote) {
+            ItemStack[] nowItemStacks = {getStackInSlot(81), getStackInSlot(82), getStackInSlot(83)};
+            boolean isRemovedOnSlot1 = nowItemStacks[0].getItem() == Items.AIR && Block.getBlockFromItem(nowItemStacksCopy[0].getItem()) instanceof ShulkerBoxBlock;
+            boolean isRemovedOnSlot2 = nowItemStacks[1].getItem() == Items.AIR && Block.getBlockFromItem(nowItemStacksCopy[1].getItem()) instanceof ShulkerBoxBlock;
+            boolean isRemovedOnSlot3 = nowItemStacks[2].getItem() == Items.AIR && Block.getBlockFromItem(nowItemStacksCopy[2].getItem()) instanceof ShulkerBoxBlock;
 
-        ItemStack[] nowItemStacks = {getStackInSlot(81), getStackInSlot(82), getStackInSlot(83)};
-
-        boolean isRemovedOnSlot1 = nowItemStacks[0].getItem() == Items.AIR && Block.getBlockFromItem(itemStack1.getItem()) instanceof ShulkerBoxBlock;
-        boolean isRemovedOnSlot2 = nowItemStacks[1].getItem() == Items.AIR && Block.getBlockFromItem(itemStack2.getItem()) instanceof ShulkerBoxBlock;
-        boolean isRemovedOnSlot3 = nowItemStacks[2].getItem() == Items.AIR && Block.getBlockFromItem(itemStack3.getItem()) instanceof ShulkerBoxBlock;
-
-        if (this.listeners != null) {
-            Iterator var1 = this.listeners.iterator();
-            int slotNum = getRemovedSlot(isRemovedOnSlot1, isRemovedOnSlot2, isRemovedOnSlot3);
-            if (isAddSlot(nowItemStacks[0], itemStack1) || isAddSlot(nowItemStacks[1], itemStack2) || isAddSlot(nowItemStacks[2], itemStack3)) {
-
-                itemStack1 = nowItemStacks[0].copy();
-                itemStack2 = nowItemStacks[1].copy();
-                itemStack3 = nowItemStacks[2].copy();
-                while (var1.hasNext()) {
-                    IShulkerSlotChangeListener changeListener = (IShulkerSlotChangeListener) var1.next();
-                    changeListener.addShulkerBoxOnSlot(this, nowItemStacks[0],nowItemStacks[1],nowItemStacks[2]);
-                    LOGGER.info("add");
-                }
-            } else if (slotNum > 0) {
-                itemStack1 = nowItemStacks[0].copy();
-                itemStack2 = nowItemStacks[1].copy();
-                itemStack3 = nowItemStacks[2].copy();
-                while (var1.hasNext()) {
-                    IShulkerSlotChangeListener changeListener = (IShulkerSlotChangeListener) var1.next();
-                    changeListener.removeShulkerBoxOnSlot(this, slotNum);
+            if (this.listeners != null) {
+                Iterator var1 = this.listeners.iterator();
+                final int slotNum = getRemovedSlot(isRemovedOnSlot1, isRemovedOnSlot2, isRemovedOnSlot3);
+                if (isAddSlot(nowItemStacks[0], nowItemStacksCopy[0]) || isAddSlot(nowItemStacks[1], nowItemStacksCopy[1]) || isAddSlot(nowItemStacks[2], nowItemStacksCopy[2])) {
+                    copyToCurrent(nowItemStacks);
+                    while (var1.hasNext()) {
+                        IShulkerSlotChangeListener changeListener = (IShulkerSlotChangeListener) var1.next();
+                        changeListener.addShulkerBoxOnSlot(this, nowItemStacks[0], nowItemStacks[1], nowItemStacks[2]);
+                        LOGGER.info("add");
+                    }
+                } else if (slotNum > 0) {
+                    copyToCurrent(nowItemStacks);
+                    while (var1.hasNext()) {
+                        IShulkerSlotChangeListener changeListener = (IShulkerSlotChangeListener) var1.next();
+                        changeListener.removeShulkerBoxOnSlot(this, slotNum);
+                    }
                 }
             }
-            while (var1.hasNext()) {
-                IShulkerSlotChangeListener changeListener = (IShulkerSlotChangeListener) var1.next();
-                changeListener.changeAllSlot(this);
-            }
+        } else {
+            LOGGER.info("client");
+        }
+    }
+
+    private void copyToCurrent(ItemStack[] itemStacks) {
+        for (int i = 0; i < itemStacks.length; i++) {
+            nowItemStacksCopy[i] = itemStacks[i].copy();
         }
     }
 
     private boolean isAddSlot(ItemStack nowItemStack, ItemStack beforeItemStack) {
-        boolean isItemChange = beforeItemStack.getItem() == Items.AIR && Block.getBlockFromItem(nowItemStack.getItem()) instanceof ShulkerBoxBlock;
-        if (!isItemChange) {
-            isItemChange = Block.getBlockFromItem(beforeItemStack.getItem()) instanceof ShulkerBoxBlock && Block.getBlockFromItem(nowItemStack.getItem()) instanceof ShulkerBoxBlock;
-        }
-        boolean isEqualItem = !nowItemStack.isItemEqual(beforeItemStack);
+        if (nowItemStack.getItem() == Items.AIR) return false;
 
-        CompoundNBT nowTag = nowItemStack.getTag();
-        CompoundNBT beforeTag = beforeItemStack.getTag();
-
-        if (nowTag != null && beforeTag != null) {
-        }
-
-
-        return isEqualItem && isItemChange;
+        return !Container.areItemsAndTagsEqual(nowItemStack, beforeItemStack);
     }
 
 
