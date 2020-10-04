@@ -7,24 +7,22 @@ import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.NonNullList;
 
 import java.util.List;
 
-import static mod.noriokun4649.shulkerboxmultiopentool.ShulkerBoxMultiOpenToolMod.LOGGER;
-
 public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
     ShulkerInventory iInventory;
+    final int maxSize = 27;
 
     @Override
     public void addShulkerBoxOnSlot(final IInventory iInventory, final ItemStack shulkerSlot1, final ItemStack shulkerSlot2, final ItemStack shulkerSlot3) {
         this.iInventory = (ShulkerInventory) iInventory;
 
-        NonNullList<ItemStack> items1 = NonNullList.withSize(27, ItemStack.EMPTY);
-        NonNullList<ItemStack> items2 = NonNullList.withSize(27, ItemStack.EMPTY);
-        NonNullList<ItemStack> items3 = NonNullList.withSize(27, ItemStack.EMPTY);
+        NonNullList<ItemStack> items1 = NonNullList.withSize(maxSize, ItemStack.EMPTY);
+        NonNullList<ItemStack> items2 = NonNullList.withSize(maxSize, ItemStack.EMPTY);
+        NonNullList<ItemStack> items3 = NonNullList.withSize(maxSize, ItemStack.EMPTY);
 
         if (shulkerSlot1.getTag() != null) {
             loadCompoundNBT(shulkerSlot1, items1);
@@ -32,35 +30,50 @@ public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
         }
         if (shulkerSlot2.getTag() != null) {
             loadCompoundNBT(shulkerSlot2, items2);
-            setInventoryItemsStacks(27, items2);
+            setInventoryItemsStacks(1, items2);
         }
         if (shulkerSlot3.getTag() != null) {
             loadCompoundNBT(shulkerSlot3, items3);
-            setInventoryItemsStacks(54, items3);
+            setInventoryItemsStacks(2, items3);
         }
     }
 
     @Override
     public void removeShulkerBoxOnSlot(final IInventory iInventory, final int slotNum) {
-        int slotSize = 27;
-        int endSize = slotSize * slotNum;
-        for (int i = endSize - slotSize; i < endSize; i++) {
+        final int endSize = maxSize * slotNum;
+        for (int i = endSize - maxSize; i < endSize; i++) {
             iInventory.removeStackFromSlot(i);
         }
     }
 
     @Override
     public void changeAllSlot(IInventory iInventory) {
-        ItemStack slot1 = iInventory.getStackInSlot(82);
-        ItemStack slot2 = iInventory.getStackInSlot(83);
-        ItemStack slot3 = iInventory.getStackInSlot(84);
-        if (Block.getBlockFromItem(slot1.getItem()) instanceof ShulkerBoxBlock) saveCompoundNBT(slot1, getAllItemStack(0));
-        if (Block.getBlockFromItem(slot2.getItem()) instanceof ShulkerBoxBlock) saveCompoundNBT(slot2, getAllItemStack(1));
-        if (Block.getBlockFromItem(slot3.getItem()) instanceof ShulkerBoxBlock) saveCompoundNBT(slot3, getAllItemStack(2));
+        NonNullList<ItemStack> emptyList = NonNullList.withSize(maxSize, ItemStack.EMPTY);
+        ItemStack slot1 = iInventory.getStackInSlot(81);
+        ItemStack slot2 = iInventory.getStackInSlot(82);
+        ItemStack slot3 = iInventory.getStackInSlot(83);
+
+        if (Block.getBlockFromItem(slot1.getItem()) instanceof ShulkerBoxBlock) {
+            NonNullList<ItemStack> nowItemListSlot1 = getAllItemStack(0);
+            if (!nowItemListSlot1.equals(emptyList)) {
+                saveCompoundNBT(slot1, nowItemListSlot1);
+            }
+        }
+        if (Block.getBlockFromItem(slot2.getItem()) instanceof ShulkerBoxBlock) {
+            NonNullList<ItemStack> nowItemListSlot2 = getAllItemStack(1);
+            if (!nowItemListSlot2.equals(emptyList)) {
+                saveCompoundNBT(slot2, nowItemListSlot2);
+            }
+        }
+        if (Block.getBlockFromItem(slot3.getItem()) instanceof ShulkerBoxBlock) {
+            NonNullList<ItemStack> nowItemListSlot3 = getAllItemStack(2);
+            if (!nowItemListSlot3.equals(emptyList)) {
+                saveCompoundNBT(slot3, nowItemListSlot3);
+            }
+        }
     }
 
     private NonNullList<ItemStack> getAllItemStack(final int startSlot) {
-        int maxSize = 27;
         NonNullList<ItemStack> itemStacks = NonNullList.withSize(maxSize, ItemStack.EMPTY);
         for (int i = 0; i < maxSize; i++) {
             itemStacks.set(i, iInventory.getStackInSlot(i + (maxSize * startSlot)));
@@ -69,7 +82,7 @@ public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
     }
 
     private void setInventoryItemsStacks(final int offset, final NonNullList<ItemStack> inventoryItemsStacks) {
-        int index = offset;
+        int index = maxSize * offset;
         for (ItemStack itemStack : inventoryItemsStacks) {
             iInventory.setInventorySlotContents(index++, itemStack);
         }
@@ -88,7 +101,7 @@ public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
         CompoundNBT compoundNBT = itemStack.getTag();
         if (compoundNBT != null){
             compoundNBT = compoundNBT.getCompound("BlockEntityTag");
-            ItemStackHelper.saveAllItems(compoundNBT, itemStacks);
+            itemStack.setTag(ItemStackHelper.saveAllItems(compoundNBT, itemStacks));
         }
     }
 
