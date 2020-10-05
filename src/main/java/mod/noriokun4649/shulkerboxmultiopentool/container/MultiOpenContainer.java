@@ -29,6 +29,7 @@ public class MultiOpenContainer extends Container {
     private final int shulkerBoxItemSlotSize = 27;
     private final int shulkerBoxCount = 3;
     private final int shulkerBoxSlotSize = 3;
+    private final NonNullList<ItemStack> emptyList = NonNullList.withSize(27, ItemStack.EMPTY);
 
     public MultiOpenContainer(final int windowNum, final PlayerInventory playerInventory, final PacketBuffer packetBuffer) {
         super(MULTI_OPEN_TOOL_CONT, windowNum);
@@ -104,6 +105,7 @@ public class MultiOpenContainer extends Container {
 
     @Override
     public ItemStack transferStackInSlot(PlayerEntity playerIn, int index) {
+        LOGGER.info("Quick index"+index);
         Slot slot = inventorySlots.get(index);
         if (slot != null && slot.getHasStack()) {
             ItemStack clickItemStack = slot.getStack();
@@ -118,6 +120,7 @@ public class MultiOpenContainer extends Container {
                     }
                 }
             } else {
+                removeItemsAndSaveTags(clickItemStack, index);
                 if (!mergeItemStack(clickItemStack, 0, 36, false)) {
                     return ItemStack.EMPTY;
                 }
@@ -141,17 +144,27 @@ public class MultiOpenContainer extends Container {
     @Override
     public ItemStack slotClick(int slotId, int dragType, ClickType clickTypeIn, PlayerEntity player) {
         ItemStack nowItemStack = super.slotClick(slotId, dragType, clickTypeIn, player);
-        LOGGER.info(slotId);
-        LOGGER.info(nowItemStack.getDisplayName().getString());
-        LOGGER.info(clickTypeIn);
         if (Block.getBlockFromItem(nowItemStack.getItem()) instanceof ShulkerBoxBlock && slotId >= 117) {
-            LOGGER.info("INT");
-            NonNullList<ItemStack> nowItemListSlot1 = getAllItemStack(slotId - 117);
-            LOGGER.info(nowItemListSlot1);
-            saveCompoundNBT(nowItemStack, nowItemListSlot1);
+            removeItemsAndSaveTags(nowItemStack, slotId);
         }
-
         return nowItemStack;
+    }
+
+    private void removeItemsAndSaveTags(final ItemStack clickItemStack, final int index){
+        LOGGER.info("remove "+ index);
+        LOGGER.info("remove "+ clickItemStack.getDisplayName().getString());
+        if (Block.getBlockFromItem(clickItemStack.getItem()) instanceof ShulkerBoxBlock) {
+            NonNullList<ItemStack> nowItemListSlot1 = getAllItemStack(index - 117);
+            LOGGER.info(nowItemListSlot1);
+            if (!nowItemListSlot1.equals(emptyList)) {
+                LOGGER.info("save");
+                saveCompoundNBT(clickItemStack, nowItemListSlot1);
+            }
+            final int endSize = 27 * (index - 116);
+            for (int i = endSize - 27; i < endSize; i++) {
+                inventory.removeStackFromSlot(i);
+            }
+        }
     }
 
     private NonNullList<ItemStack> getAllItemStack(final int startSlot) {
@@ -166,7 +179,8 @@ public class MultiOpenContainer extends Container {
         CompoundNBT compoundNBT = itemStack.getTag();
         if (compoundNBT != null) {
             compoundNBT = compoundNBT.getCompound("BlockEntityTag");
-            itemStack.setTag(ItemStackHelper.saveAllItems(compoundNBT, itemStacks));
+             ItemStackHelper.saveAllItems(compoundNBT, itemStacks);
+             itemStack.setTagInfo("BlockEntityTag",compoundNBT);
         }
     }
 }
