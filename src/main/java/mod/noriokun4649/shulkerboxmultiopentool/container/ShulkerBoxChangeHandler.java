@@ -40,10 +40,7 @@ public class ShulkerBoxChangeHandler implements IShulkerSlotChangeListener {
 
     @Override
     public void removeShulkerBoxOnSlot(final IInventory iInventory, final int slotNum) {
-        final int endSize = maxSize * slotNum;
-        for (int i = endSize - maxSize; i < endSize; i++) {
-            iInventory.removeStackFromSlot(i);
-        }
+
     }
 
     @Override
