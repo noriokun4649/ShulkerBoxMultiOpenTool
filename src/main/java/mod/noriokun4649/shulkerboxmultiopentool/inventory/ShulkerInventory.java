@@ -43,25 +43,28 @@ public class ShulkerInventory extends Inventory {
         super.markDirty();
         if (Minecraft.getInstance().world.isRemote) {
             ItemStack[] nowItemStacks = {getStackInSlot(81), getStackInSlot(82), getStackInSlot(83)};
-            boolean isRemovedOnSlot1 = nowItemStacks[0].getItem() == Items.AIR && Block.getBlockFromItem(nowItemStacksCopy[0].getItem()) instanceof ShulkerBoxBlock;
-            boolean isRemovedOnSlot2 = nowItemStacks[1].getItem() == Items.AIR && Block.getBlockFromItem(nowItemStacksCopy[1].getItem()) instanceof ShulkerBoxBlock;
-            boolean isRemovedOnSlot3 = nowItemStacks[2].getItem() == Items.AIR && Block.getBlockFromItem(nowItemStacksCopy[2].getItem()) instanceof ShulkerBoxBlock;
+            final boolean isRemovedOnSlot1 = nowItemStacks[0].getItem() == Items.AIR && Block.getBlockFromItem(nowItemStacksCopy[0].getItem()) instanceof ShulkerBoxBlock;
+            final boolean isRemovedOnSlot2 = nowItemStacks[1].getItem() == Items.AIR && Block.getBlockFromItem(nowItemStacksCopy[1].getItem()) instanceof ShulkerBoxBlock;
+            final boolean isRemovedOnSlot3 = nowItemStacks[2].getItem() == Items.AIR && Block.getBlockFromItem(nowItemStacksCopy[2].getItem()) instanceof ShulkerBoxBlock;
+            final boolean isAddOnSlot1 = isAddSlot(nowItemStacks[0], nowItemStacksCopy[0]);
+            final boolean isAddOnSlot2 = isAddSlot(nowItemStacks[1], nowItemStacksCopy[1]);
+            final boolean isAddOnSlot3 = isAddSlot(nowItemStacks[2], nowItemStacksCopy[2]);
 
             if (this.listeners != null) {
                 Iterator var1 = this.listeners.iterator();
-                final int slotNum = getRemovedSlot(isRemovedOnSlot1, isRemovedOnSlot2, isRemovedOnSlot3);
-                if (isAddSlot(nowItemStacks[0], nowItemStacksCopy[0]) || isAddSlot(nowItemStacks[1], nowItemStacksCopy[1]) || isAddSlot(nowItemStacks[2], nowItemStacksCopy[2])) {
+                final int removeSlotNum = getRemovedSlot(isRemovedOnSlot1, isRemovedOnSlot2, isRemovedOnSlot3);
+                final int addSlotNum = getAddSlot(isAddOnSlot1, isAddOnSlot2, isAddOnSlot3);
+                if (addSlotNum >= 0) {
                     copyToCurrent(nowItemStacks);
                     while (var1.hasNext()) {
                         IShulkerSlotChangeListener changeListener = (IShulkerSlotChangeListener) var1.next();
-                        changeListener.addShulkerBoxOnSlot(this, nowItemStacks[0], nowItemStacks[1], nowItemStacks[2]);
-                        LOGGER.info("add");
+                        changeListener.addShulkerBoxOnSlot(this, addSlotNum);
                     }
-                } else if (slotNum > 0) {
+                } else if (removeSlotNum >= 0) {
                     copyToCurrent(nowItemStacks);
                     while (var1.hasNext()) {
                         IShulkerSlotChangeListener changeListener = (IShulkerSlotChangeListener) var1.next();
-                        changeListener.removeShulkerBoxOnSlot(this, slotNum);
+                        changeListener.removeShulkerBoxOnSlot(this, removeSlotNum);
                     }
                 }
             }
@@ -85,13 +88,17 @@ public class ShulkerInventory extends Inventory {
 
     private int getRemovedSlot(boolean nowItemStack1, boolean nowItemStack2, boolean nowItemStack3) {
         if (nowItemStack1) {
-            return 1;
-        } else if (nowItemStack2) {
-            return 2;
-        } else if (nowItemStack3) {
-            return 3;
-        } else {
             return 0;
+        } else if (nowItemStack2) {
+            return 1;
+        } else if (nowItemStack3) {
+            return 2;
+        } else {
+            return -1;
         }
+    }
+
+    private int getAddSlot(boolean nowItemStack1, boolean nowItemStack2, boolean nowItemStack3) {
+        return getRemovedSlot(nowItemStack1, nowItemStack2, nowItemStack3);
     }
 }
